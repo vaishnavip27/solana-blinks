@@ -18,7 +18,19 @@ export async function GET(request: Request) {
     description: "This is Solandy's demo blink",
     label: "Click me!",
     title: "DO BLINK!",
-    error: { message: "This blink is not implemented yet" },
+    links: {
+      actions: [
+        {
+          href: request.url,
+          label: "same action",
+        },
+        {
+          href: request.url + "?action=",
+          label: "another action",
+        },
+      ],
+    },
+    // error: { message: "This blink is not implemented yet" },
   };
   return Response.json(responseBody, {
     headers: ACTIONS_CORS_HEADERS,
@@ -31,13 +43,20 @@ export async function POST(request: Request) {
     const userPubkey = new PublicKey(requestBody.account);
     console.log(userPubkey.toBase58());
 
+    const url = new URL(request.url);
+    const action = url.searchParams.get("action");
+
     const connection = new Connection(clusterApiUrl("mainnet-beta"));
     const ix = SystemProgram.transfer({
       fromPubkey: userPubkey,
       toPubkey: new PublicKey("DroG2SgCdku4QstjQPvHYGSnTQEULHpt88cHvQpHSTPm"),
       lamports: 1,
     });
-    const tx = new Transaction().add(ix);
+
+    const tx = new Transaction();
+    if (action == "another") {
+      tx.add(ix);
+    }
     tx.feePayer = userPubkey;
     const { blockhash } = await connection.getLatestBlockhash("finalized");
     console.log("using blockhash: " + blockhash);
